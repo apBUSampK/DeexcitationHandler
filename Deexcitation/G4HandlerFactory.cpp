@@ -2,6 +2,7 @@
 #include <optional>
 #include <string>
 
+#include <G4FermiBreakUpAN.hh>
 #include <Randomize.hh>
 
 #include "Deexcitation/handler/ExcitationHandler.h"
@@ -81,7 +82,7 @@ cola::G4HandlerConverter* G4HandlerFactory::DoCreate(const std::map<std::string,
     model->SetStableThreshold(*config.stableThreshold);
   }
 
-  model->SetFermiBreakUpCondition([maxA=config.A.value_or(19), maxZ=config.Z.value_or(9)] (const G4Fragment& fragment) {
+  model->SetFermiBreakUpCondition([maxA=config.A.value_or(MAX_A), maxZ=config.Z.value_or(MAX_Z)] (const G4Fragment& fragment) {
     return fragment.GetZ_asInt() < maxZ && fragment.GetA_asInt() < maxA;
   });
 
