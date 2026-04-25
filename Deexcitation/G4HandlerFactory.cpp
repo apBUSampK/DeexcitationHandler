@@ -87,8 +87,8 @@ cola::G4HandlerConverter* G4HandlerFactory::DoCreate(const std::map<std::string,
   });
 
   model->SetMultiFragmentationCondition([
-      maxA=config.A.value_or(19),
-      maxZ=config.Z.value_or(9),
+      maxA=config.A.value_or(MAX_A),
+      maxZ=config.Z.value_or(MAX_Z),
       lowerBoundTransitionMF=config.lowerMfThreshold.value_or(3 * CLHEP::MeV),
       upperBoundTransitionMF=config.upperMfThreshold.value_or(5 * CLHEP::MeV)
     ] (const G4Fragment& fragment) {
