@@ -246,6 +246,22 @@ std::vector<G4ReactionProduct> ExcitationHandler::BreakItUp(const G4Fragment& fr
     }
   }
 
+  // Geant4 randomly throws neutron fragments, here's a bandaid for it
+
+  G4FragmentVector buffer;
+  for (auto it = results.begin(); it != results.end();) {
+    if (neutronDecayCondition_(**it)) {
+      buffer.push_back(*it);
+      it = results.erase(it);
+    } else {
+      ++it;
+    }
+  }
+
+  for (auto& to_decay: buffer) {
+    ApplyPureNeutronDecay(std::unique_ptr<G4Fragment>(to_decay), results);
+  }
+
   auto reactionProducts = ConvertResults(results);
 
   return reactionProducts;
@@ -354,7 +370,7 @@ ExcitationHandler::Condition ExcitationHandler::DefaultPhotonEvaporationConditio
 
 ExcitationHandler::Condition ExcitationHandler::DefaultNeutronDecayCondition() {
   return [](const G4Fragment& fragment) {
-    return fragment.GetA_asInt() > 0 && fragment.GetZ_asInt() == 0;
+    return fragment.GetA_asInt() > 1 && fragment.GetZ_asInt() == 0;
   };
 }
 
