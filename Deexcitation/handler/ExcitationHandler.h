@@ -1,21 +1,20 @@
 #ifndef DEEXCITATION_HANDLER_EXCITATIONHANDLER_H_
 #define DEEXCITATION_HANDLER_EXCITATIONHANDLER_H_
 
-#include <functional>
-#include <memory>
-#include <vector>
-#include <queue>
-
-#include <G4Fragment.hh>
-#include <G4ReactionProductVector.hh>
-#include <G4IonTable.hh>
 #include <G4DeexPrecoParameters.hh>
 #include <G4FermiPhaseDecay.hh>
+#include <G4Fragment.hh>
+#include <G4IonTable.hh>
 #include <G4NistManager.hh>
-
-#include <G4VMultiFragmentation.hh>
+#include <G4ReactionProductVector.hh>
 #include <G4VEvaporation.hh>
 #include <G4VFermiBreakUp.hh>
+#include <G4VMultiFragmentation.hh>
+
+#include <functional>
+#include <memory>
+#include <queue>
+#include <vector>
 
 class ExcitationHandler {
  private:
@@ -49,7 +48,8 @@ class ExcitationHandler {
   std::vector<G4ReactionProduct> BreakItUp(const G4Fragment& fragment);
 
   // parameters setters
-  ExcitationHandler& SetMultiFragmentation(std::unique_ptr<G4VMultiFragmentation>&& model = DefaultMultiFragmentation()) {
+  ExcitationHandler& SetMultiFragmentation(
+      std::unique_ptr<G4VMultiFragmentation>&& model = DefaultMultiFragmentation()) {
     multiFragmentationModel_ = std::move(model);
     return *this;
   }
@@ -105,9 +105,7 @@ class ExcitationHandler {
   }
 
   // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-  ExcitationHandler& SetFermiBreakUpCondition() {
-    return SetFermiBreakUpCondition(DefaultFermiBreakUpCondition());
-  }
+  ExcitationHandler& SetFermiBreakUpCondition() { return SetFermiBreakUpCondition(DefaultFermiBreakUpCondition()); }
 
   template <class F>
   ExcitationHandler& SetEvaporationCondition(F&& func) {
@@ -116,9 +114,7 @@ class ExcitationHandler {
   }
 
   // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-  ExcitationHandler& SetEvaporationCondition() {
-    return SetEvaporationCondition(DefaultEvaporationCondition());
-  }
+  ExcitationHandler& SetEvaporationCondition() { return SetEvaporationCondition(DefaultEvaporationCondition()); }
 
   template <class F>
   ExcitationHandler& SetPhotonEvaporationCondition(F&& func) {
@@ -138,9 +134,7 @@ class ExcitationHandler {
   }
 
   // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-  ExcitationHandler& SetNeutronDecayCondition() {
-    return SetNeutronDecayCondition(DefaultNeutronDecayCondition());
-  }
+  ExcitationHandler& SetNeutronDecayCondition() { return SetNeutronDecayCondition(DefaultNeutronDecayCondition()); }
 
   ExcitationHandler& SetStableThreshold(double threshold) {
     stableThreshold_ = threshold;
@@ -215,18 +209,15 @@ class ExcitationHandler {
   void ApplyMultiFragmentation(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results,
                                FragmentQueue& nextStage);
 
-  void ApplyFermiBreakUp(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results,
-                         FragmentQueue& nextStage);
+  void ApplyFermiBreakUp(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results, FragmentQueue& nextStage);
 
-  void ApplyEvaporation(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results,
-                        FragmentQueue& nextStage);
+  void ApplyEvaporation(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results, FragmentQueue& nextStage);
 
   void ApplyPhotonEvaporation(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results);
 
   void ApplyPureNeutronDecay(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results);
 
-  void GroupFragments(G4FragmentVector&& fragments, G4FragmentVector& results,
-                      FragmentQueue& nextStage);
+  void GroupFragments(G4FragmentVector&& fragments, G4FragmentVector& results, FragmentQueue& nextStage);
 
   std::vector<G4ReactionProduct> ConvertResults(const G4FragmentVector& results);
 

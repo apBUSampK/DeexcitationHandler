@@ -1,9 +1,9 @@
 #ifndef DEEXCITATION_DEEXCITATIONMODULE_H_
 #define DEEXCITATION_DEEXCITATIONMODULE_H_
 
-#include <COLA.hh>
-
 #include "Deexcitation/G4HandlerFactory.h"
+
+#include <COLA.hh>
 
 namespace cola {
 

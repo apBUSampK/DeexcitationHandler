@@ -1,8 +1,9 @@
-#include <cmath>
-#include <COLA.hh>
-#include <CLHEP/Units/PhysicalConstants.h>
-
 #include "Deexcitation/G4HandlerFactory.h"
+
+#include <CLHEP/Units/PhysicalConstants.h>
+#include <COLA.hh>
+
+#include <cmath>
 
 class TestGenerator final : public cola::VGenerator {
  public:

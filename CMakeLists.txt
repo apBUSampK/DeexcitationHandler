@@ -23,12 +23,7 @@ set(COLA_CMAKE_CXX_CLANG_TIDY
     CACHE STRING "Passed to CMAKE_CXX_CLANG_TIDY for ${COLA_MODULE} targets"
 )
 
-file(
-    GLOB SOURCES
-    CONFIGURE_DEPENDS
-    Deexcitation/*.cpp
-    Deexcitation/handler/*.cpp
-)
+file(GLOB SOURCES CONFIGURE_DEPENDS Deexcitation/*.cpp Deexcitation/handler/*.cpp)
 
 add_library(${COLA_MODULE} SHARED ${SOURCES})
 
@@ -38,16 +33,15 @@ target_compile_options(${COLA_MODULE} PRIVATE -Wall -Werror -Wextra -Wpedantic)
 target_compile_features(${COLA_MODULE} PRIVATE cxx_std_20)
 
 target_include_directories(
-    ${COLA_MODULE}
-    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-           $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/Deexcitation>
+    ${COLA_MODULE} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+                          $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/Deexcitation>
 )
 
 set_target_properties(
     ${COLA_MODULE}
     PROPERTIES VERSION "${PROJECT_VERSION}"
-                 SOVERSION "${PROJECT_VERSION_MAJOR}"
-                 CXX_CLANG_TIDY "${COLA_CMAKE_CXX_CLANG_TIDY}"
+               SOVERSION "${PROJECT_VERSION_MAJOR}"
+               CXX_CLANG_TIDY "${COLA_CMAKE_CXX_CLANG_TIDY}"
 )
 
 install(
@@ -56,7 +50,8 @@ install(
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    INCLUDES
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
 install(
@@ -78,10 +73,9 @@ write_basic_package_version_file(
     COMPATIBILITY AnyNewerVersion
 )
 
-install(
-    FILES ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE}Config.cmake
-          ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE}ConfigVersion.cmake
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${COLA_MODULE}
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE}Config.cmake
+              ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE}ConfigVersion.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${COLA_MODULE}
 )
 
 install(
@@ -95,5 +89,4 @@ if (BUILD_TESTING)
     add_subdirectory(tests)
 endif ()
 
-# format and tidy targets (exclude COLA from checks)
-setup_cola_quality_tools(EXCLUDE_PATTERNS ".*/COLA/.*")
+setup_cola_quality_tools(EXCLUDE_PATTERNS "(^|/)COLA/" "(^|/)geant4/")

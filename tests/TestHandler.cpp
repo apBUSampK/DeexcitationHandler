@@ -2,21 +2,21 @@
 // Created by Artem Novikov on 19.07.2023.
 //
 
+#include "Deexcitation/handler/ExcitationHandler.h"
+#include "Deexcitation/handler/FermiBreakUpWrapper.h"
+#include "FermiBreakUp/FermiBreakUp.h"
+#include "FermiBreakUp/Splitter.h"
+#include "FermiBreakUp/util/Cache.h"
+#include "FermiBreakUp/util/DataTypes.h"
+#include "FermiBreakUp/util/Logger.h"
+#include "FermiBreakUp/util/Randomizer.h"
+
 #include <gtest/gtest.h>
+
 #include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
-
-#include "Deexcitation/handler/FermiBreakUpWrapper.h"
-#include "FermiBreakUp/Splitter.h"
-#include "FermiBreakUp/util/DataTypes.h"
-#include "FermiBreakUp/util/Logger.h"
-#include "FermiBreakUp/util/Randomizer.h"
-#include "FermiBreakUp/util/Cache.h"
-#include "FermiBreakUp/FermiBreakUp.h"
-
-#include "Deexcitation/handler/ExcitationHandler.h"
 
 namespace {
   std::unique_ptr<fbu::FermiBreakUp::SplitCache> GetCache(const std::string_view name) {
@@ -33,20 +33,16 @@ namespace {
   }
 
   class ConfigurationsFixture : public ::testing::TestWithParam<std::string_view> {
-    protected:
-      std::string_view CacheType;
+   protected:
+    std::string_view CacheType;
   };
 
-  INSTANTIATE_TEST_SUITE_P(
-    ConservationTests,
-    ConfigurationsFixture,
-    ::testing::Values(
-      "lfu"
-      // "simple"
-    )
-  );
+  INSTANTIATE_TEST_SUITE_P(ConservationTests, ConfigurationsFixture,
+                           ::testing::Values("lfu"
+                                             // "simple"
+                                             ));
 
-} // namespace
+}  // namespace
 
 TEST_P(ConfigurationsFixture, MassAndChargeConservation) {
   auto model = ExcitationHandler();
@@ -80,14 +76,16 @@ TEST_P(ConfigurationsFixture, MassAndChargeConservation) {
     }
 
     // test mean, because of multifragmentation model
-    ASSERT_NEAR(G4double(chargeTotal) / runs, charge, 2 * charge / std::sqrt(runs)) << "violates charge conservation: " << mass << ' ' << charge << ' ' << energyPerNuclei;
+    ASSERT_NEAR(G4double(chargeTotal) / runs, charge, 2 * charge / std::sqrt(runs))
+        << "violates charge conservation: " << mass << ' ' << charge << ' ' << energyPerNuclei;
   }
 }
 
 // Is doesn't work because of multi-fragmentation model *(
 // TEST_P(ConfigurationsFixture, Vector4Conservation) {
 //   auto model = ExcitationHandler();
-//   auto fbuModel = std::make_unique<FermiBreakUpWrapper>(fbu::FermiBreakUp(GetCache(ConfigurationsFixture::GetParam())));
+//   auto fbuModel =
+//   std::make_unique<FermiBreakUpWrapper>(fbu::FermiBreakUp(GetCache(ConfigurationsFixture::GetParam())));
 //   fbuModel->Initialise();
 //   model.SetFermiBreakUp(std::move(fbuModel));
 //   const int seed = 7;
@@ -115,9 +113,10 @@ TEST_P(ConfigurationsFixture, MassAndChargeConservation) {
 //       }
 //     }
 
-//     ASSERT_NEAR(sumMomentum.x() / runs, totalMomentum.x(), std::max(1e-3, std::abs(totalMomentum.x()) / std::sqrt(runs)));
-//     ASSERT_NEAR(sumMomentum.y() / runs, totalMomentum.y(), std::max(1e-3, std::abs(totalMomentum.y()) / std::sqrt(runs)));
-//     ASSERT_NEAR(sumMomentum.z() / runs, totalMomentum.z(), std::max(1e-3, std::abs(totalMomentum.z()) / std::sqrt(runs)));
-//     ASSERT_NEAR(sumEnergy / runs, totalMomentum.e(), std::max(1e-3, std::abs(totalMomentum.e()) / std::sqrt(runs)));
+//     ASSERT_NEAR(sumMomentum.x() / runs, totalMomentum.x(), std::max(1e-3, std::abs(totalMomentum.x()) /
+//     std::sqrt(runs))); ASSERT_NEAR(sumMomentum.y() / runs, totalMomentum.y(), std::max(1e-3,
+//     std::abs(totalMomentum.y()) / std::sqrt(runs))); ASSERT_NEAR(sumMomentum.z() / runs, totalMomentum.z(),
+//     std::max(1e-3, std::abs(totalMomentum.z()) / std::sqrt(runs))); ASSERT_NEAR(sumEnergy / runs, totalMomentum.e(),
+//     std::max(1e-3, std::abs(totalMomentum.e()) / std::sqrt(runs)));
 //   }
 // }

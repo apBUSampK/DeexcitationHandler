@@ -17,6 +17,7 @@ jobs:
     timeout-minutes: 180
     env:
       CXX: g++
+      G4_VERSION: v11.4.0
 
     steps:
       - name: Checkout DeexcitationHandler
@@ -33,7 +34,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: Geant4/geant4
-          ref: v11.4.1
+          ref: ${{ env.G4_VERSION }}
           path: geant4
           fetch-depth: 1
 
@@ -46,18 +47,17 @@ jobs:
 
       - name: Build and install Geant4
         run: |
-          cmake -S geant4 -B build_g4 -G Ninja \
+          cmake -S geant4 -B geant4/build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX=/usr/local \
-            -DCMAKE_PREFIX_PATH=/usr/local \
             -DGEANT4_USE_SYSTEM_EXPAT=ON \
             -DGEANT4_USE_SYSTEM_ZLIB=ON \
-            -DGEANT4_INSTALL_DATA=OFF \
+            -DGEANT4_INSTALL_DATA=ON \
             -DGEANT4_BUILD_EXAMPLES=OFF \
             -DGEANT4_USE_GDML=OFF \
             -DGEANT4_USE_QT=OFF
-          cmake --build build_g4 --parallel "$(nproc)"
-          sudo cmake --install build_g4
+          cmake --build geant4/build --parallel "$(nproc)"
+          sudo cmake --install geant4/build
 
       - name: Build and install COLA
         working-directory: COLA

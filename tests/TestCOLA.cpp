@@ -1,9 +1,11 @@
-#include <cmath>
-#include <sstream>
-
 #include <CLHEP/Units/PhysicalConstants.h>
 #include <COLA.hh>
 #include <gtest/gtest.h>
+
+#include "Deexcitation/G4HandlerFactory.h"
+
+#include <cmath>
+#include <sstream>
 
 namespace {
 

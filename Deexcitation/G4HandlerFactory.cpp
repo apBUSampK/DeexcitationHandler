@@ -1,20 +1,20 @@
+#include "Deexcitation/G4HandlerFactory.h"
+
+#include "Deexcitation/G4HandlerConverter.h"
+#include "Deexcitation/handler/ExcitationHandler.h"
+
+#include <G4FermiBreakUpAN.hh>
+#include <Randomize.hh>
+
 #include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
 
-#include <G4FermiBreakUpAN.hh>
-#include <Randomize.hh>
-
-#include "Deexcitation/G4HandlerConverter.h"
-#include "Deexcitation/G4HandlerFactory.h"
-#include "Deexcitation/handler/ExcitationHandler.h"
-
 namespace {
 
   bool EndsWith(const std::string& str, const std::string& suffix) {
-    return suffix.size() <= str.size()
-        && str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+    return suffix.size() <= str.size() && str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
   }
 
   double StodWithFactor(const std::string& value) {
@@ -73,11 +73,10 @@ namespace cola {
       model->SetStableThreshold(*config.stableThreshold);
     }
 
-    model->SetFermiBreakUpCondition(
-        [maxA = config.A.value_or(static_cast<int>(MAX_A)), maxZ = config.Z.value_or(static_cast<int>(MAX_Z))](
-            const G4Fragment& fragment) {
-          return fragment.GetZ_asInt() < maxZ && fragment.GetA_asInt() < maxA;
-        });
+    model->SetFermiBreakUpCondition([maxA = config.A.value_or(static_cast<int>(MAX_A)),
+                                     maxZ = config.Z.value_or(static_cast<int>(MAX_Z))](const G4Fragment& fragment) {
+      return fragment.GetZ_asInt() < maxZ && fragment.GetA_asInt() < maxA;
+    });
 
     model->SetMultiFragmentationCondition(
         [maxA = config.A.value_or(static_cast<int>(MAX_A)), maxZ = config.Z.value_or(static_cast<int>(MAX_Z)),

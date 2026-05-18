@@ -1,7 +1,7 @@
 // NOLINTNEXTLINE(misc-include-cleaner)
-#include "Deexcitation/handler/ExcitationHandler.h"
-
 #include "Deexcitation/G4HandlerConverter.h"
+
+#include "Deexcitation/handler/ExcitationHandler.h"
 
 namespace {
 
@@ -9,8 +9,7 @@ namespace {
     const auto [A, Z] = particle.GetAZ();
 
     return G4Fragment(
-        static_cast<G4int>(A),
-        static_cast<G4int>(Z),
+        static_cast<G4int>(A), static_cast<G4int>(Z),
         G4LorentzVector(particle.momentum.x, particle.momentum.y, particle.momentum.z, particle.momentum.e));
   }
 
