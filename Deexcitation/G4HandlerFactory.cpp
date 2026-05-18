@@ -1,67 +1,51 @@
+#include "Deexcitation/G4HandlerFactory.h"
+
+#include "Deexcitation/G4HandlerConverter.h"
+#include "Deexcitation/handler/ExcitationHandler.h"
+
+#include <G4FermiDataTypes.hh>
+#include <Randomize.hh>
+
 #include <memory>
 #include <optional>
 #include <string>
-
-#include <G4FermiBreakUpAN.hh>
-#include <Randomize.hh>
-
-#include "Deexcitation/handler/ExcitationHandler.h"
-
-#include "Deexcitation/G4HandlerFactory.h"
-
-using namespace cola;
+#include <unordered_map>
 
 namespace {
-  bool EndsWith(const std::string& s, const std::string& suffix) {
-    return suffix.size() < s.size() && s.substr(s.size() - suffix.size()) == suffix;
-  }
 
   double StodWithFactor(const std::string& value) {
-    auto num = std::stod(value);
-    if (EndsWith(value, "eV")) {
+    const double num = std::stod(value);
+    if (value.ends_with("eV")) {
       return num * CLHEP::eV;
     }
-
-    if (EndsWith(value, "MeV")) {
+    if (value.ends_with("MeV")) {
       return num * CLHEP::MeV;
     }
-
-    if (EndsWith(value, "keV")) {
+    if (value.ends_with("keV")) {
       return num * CLHEP::keV;
     }
-
-    if (EndsWith(value, "GeV")) {
+    if (value.ends_with("GeV")) {
       return num * CLHEP::GeV;
     }
-
     return num;
   }
 
   struct Config {
-    Config(const std::map<std::string, std::string>& params) {
-      if (auto it = params.find("A"); it != params.end()) {
-        const auto& [_, value] = *it;
-        A = std::stoul(value);
+    explicit Config(const std::unordered_map<std::string, std::string>& params) {
+      if (const auto it = params.find("A"); it != params.end()) {
+        A = std::stoi(it->second);
       }
-
-      if (auto it = params.find("Z"); it != params.end()) {
-        const auto& [_, value] = *it;
-        Z = std::stoul(value);
+      if (const auto it = params.find("Z"); it != params.end()) {
+        Z = std::stoi(it->second);
       }
-
-      if (auto it = params.find("lowerMfThreshold"); it != params.end()) {
-        const auto& [_, value] = *it;
-        lowerMfThreshold = StodWithFactor(value);
+      if (const auto it = params.find("lowerMfThreshold"); it != params.end()) {
+        lowerMfThreshold = StodWithFactor(it->second);
       }
-
-      if (auto it = params.find("upperMfThreshold"); it != params.end()) {
-        const auto& [_, value] = *it;
-        upperMfThreshold = StodWithFactor(value);
+      if (const auto it = params.find("upperMfThreshold"); it != params.end()) {
+        upperMfThreshold = StodWithFactor(it->second);
       }
-
-      if (auto it = params.find("stableThreshold"); it != params.end()) {
-        const auto& [_, value] = *it;
-        stableThreshold = StodWithFactor(value);
+      if (const auto it = params.find("stableThreshold"); it != params.end()) {
+        stableThreshold = StodWithFactor(it->second);
       }
     }
 
@@ -71,48 +55,58 @@ namespace {
     std::optional<double> lowerMfThreshold;
     std::optional<double> upperMfThreshold;
   };
-}
 
-cola::G4HandlerConverter* G4HandlerFactory::DoCreate(const std::map<std::string, std::string>& params) {
-  auto config = Config(params);
+}  // namespace
 
-  auto model = std::make_unique<ExcitationHandler>();
+namespace cola {
 
-  if (config.stableThreshold.has_value()) {
-    model->SetStableThreshold(*config.stableThreshold);
+  std::unique_ptr<VFilter> G4HandlerFactory::Create(const std::unordered_map<std::string, std::string>& metaData) {
+    const Config config(metaData);
+
+    auto model = std::make_unique<ExcitationHandler>();
+
+    if (config.stableThreshold.has_value()) {
+      model->SetStableThreshold(*config.stableThreshold);
+    }
+
+    model->SetFermiBreakUpCondition(
+        [max_a = config.A.value_or(static_cast<int>(MAX_A)),
+         max_z = config.Z.value_or(static_cast<int>(MAX_Z))](const G4Fragment& fragment) -> bool {
+          return fragment.GetZ_asInt() < max_z && fragment.GetA_asInt() < max_a;
+        });
+
+    model->SetMultiFragmentationCondition(
+        [max_a = config.A.value_or(static_cast<int>(MAX_A)), max_z = config.Z.value_or(static_cast<int>(MAX_Z)),
+         lower_bound_transition_mf = config.lowerMfThreshold.value_or(3 * CLHEP::MeV),
+         upper_bound_transition_mf =
+             config.upperMfThreshold.value_or(5 * CLHEP::MeV)](const G4Fragment& fragment) -> bool {
+          const auto a = fragment.GetA_asInt();
+          const auto z = fragment.GetZ_asInt();
+          const auto ex = fragment.GetExcitationEnergy();
+          if (a < max_a && z < max_z) {
+            return false;
+          }
+          const G4double a_e = 1 / (2. * (upper_bound_transition_mf - lower_bound_transition_mf));
+          const G4double e0 = (upper_bound_transition_mf + lower_bound_transition_mf) / 2.;
+          const G4double weight = G4RandFlat::shoot();
+          const G4double trans_f = 0.5 * std::tanh((ex / a - e0) / a_e) + 0.5;
+
+          if (ex < lower_bound_transition_mf * a) {
+            return false;
+          }
+          if (weight < trans_f && ex < upper_bound_transition_mf * a) {
+            return true;
+          }
+          if (weight > trans_f && ex < upper_bound_transition_mf * a) {
+            return false;
+          }
+          if (ex > upper_bound_transition_mf * a) {
+            return true;
+          }
+          return false;
+        });
+
+    return std::make_unique<G4HandlerConverter>(std::move(model));
   }
 
-  model->SetFermiBreakUpCondition([maxA=config.A.value_or(MAX_A), maxZ=config.Z.value_or(MAX_Z)] (const G4Fragment& fragment) {
-    return fragment.GetZ_asInt() < maxZ && fragment.GetA_asInt() < maxA;
-  });
-
-  model->SetMultiFragmentationCondition([
-      maxA=config.A.value_or(MAX_A),
-      maxZ=config.Z.value_or(MAX_Z),
-      lowerBoundTransitionMF=config.lowerMfThreshold.value_or(3 * CLHEP::MeV),
-      upperBoundTransitionMF=config.upperMfThreshold.value_or(5 * CLHEP::MeV)
-    ] (const G4Fragment& fragment) {
-      auto A = fragment.GetA_asInt();
-      auto Z = fragment.GetZ_asInt();
-      auto Ex = fragment.GetExcitationEnergy();
-      if (A < maxA && Z < maxZ) {
-        return false;
-      }
-      G4double aE = 1 / (2. * (upperBoundTransitionMF - lowerBoundTransitionMF));
-      G4double E0 = (upperBoundTransitionMF + lowerBoundTransitionMF) / 2.;
-      G4double w = G4RandFlat::shoot();
-      G4double transF = 0.5 * std::tanh((Ex / A - E0) / aE) + 0.5;
-
-      if (Ex < lowerBoundTransitionMF * A) { return false; }
-
-      if (w < transF && Ex < upperBoundTransitionMF * A) { return true; }
-
-      if (w > transF && Ex < upperBoundTransitionMF * A) { return false; }
-
-      if (Ex > upperBoundTransitionMF * A) { return true; }
-
-      return false;
-  });
-
-  return new G4HandlerConverter(std::move(model));
-}
+}  // namespace cola
