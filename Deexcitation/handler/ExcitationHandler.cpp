@@ -279,24 +279,35 @@ void ExcitationHandler::NeutronDecay::BreakFragment(G4FragmentVector& results, c
 
   auto masses = std::vector<G4double>(fragment.GetA_asInt(), CLHEP::neutron_mass_c2);
   auto momentum = fragment.GetMomentum();
-  if (const auto diff = momentum.m() - CLHEP::neutron_mass_c2 * fragment.GetA_asInt(); diff < 10. * CLHEP::eV) {
+  const auto diff = momentum.m() - CLHEP::neutron_mass_c2 * fragment.GetA_asInt();
+  if (diff < 10. * CLHEP::eV) {
     momentum.setE(momentum.e() + 10. * CLHEP::eV - diff);
   }
 
+#if G4VERSION_NUMBER >= 1140
   const auto particlesMomentum = phaseSpaceDecay_.CalculateDecay(momentum, masses);
-  if (particlesMomentum.size() == 0) {
+  if (particlesMomentum.empty()) {
+#else
+  std::vector<G4LorentzVector*>* decayMomenta = phaseSpaceDecay_.Decay(momentum.m(), masses);
+  if (decayMomenta == nullptr || decayMomenta->empty()) {
+#endif
     std::stringstream ss;
     ss << "NeutronDecay is unable to break particle with "
-     << "A = " << fragment.GetA_asInt()
-     << ", Z = " << fragment.GetZ_asInt()
-     << ", P = " << momentum
-    ;
+       << "A = " << fragment.GetA_asInt() << ", Z = " << fragment.GetZ_asInt() << ", P = " << momentum;
     throw std::runtime_error(ss.str());
   }
 
+#if G4VERSION_NUMBER >= 1140
   for (const auto& momentum : particlesMomentum) {
     results.emplace_back(new G4Fragment(1, 0, momentum));
   }
+#else
+  for (G4LorentzVector* pMV : *decayMomenta) {
+    results.emplace_back(new G4Fragment(1, 0, *pMV));
+    delete pMV;
+  }
+  delete decayMomenta;
+#endif
 }
 
 std::unique_ptr<G4VMultiFragmentation> ExcitationHandler::DefaultMultiFragmentation() {

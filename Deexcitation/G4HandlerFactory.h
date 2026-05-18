@@ -1,19 +1,20 @@
-#pragma once
+#ifndef DEEXCITATION_G4HANDLERFACTORY_H_
+#define DEEXCITATION_G4HANDLERFACTORY_H_
 
 #include <COLA.hh>
 
-#include "Deexcitation/G4HandlerConverter.h"
-
 namespace cola {
 
-  class G4HandlerFactory final : public cola::VFactory {
-  public:
-    cola::VFilter* create(const std::map<std::string, std::string>& params) final {
-      return DoCreate(params);
-    }
+  class G4HandlerFactory final : public VConverterFactory {
+   public:
+    std::unique_ptr<VFilter> Create(const std::unordered_map<std::string, std::string>& metaData) override;
 
-  private:
-    cola::G4HandlerConverter* DoCreate(const std::map<std::string, std::string>& params);
+    const std::string& GetFilterName() const override {
+      static const std::string name{"G4DeexcitationHandler"};
+      return name;
+    }
   };
 
-} // namespace cola
+}  // namespace cola
+
+#endif  // DEEXCITATION_G4HANDLERFACTORY_H_

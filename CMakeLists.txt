@@ -1,37 +1,58 @@
-cmake_minimum_required(VERSION 3.16)
-project(Deexcitation VERSION 1.0.0 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.14)
+
+project(
+    Deexcitation
+    VERSION 1.0.0
+    LANGUAGES CXX
+)
 
 find_package(Geant4 REQUIRED)
+
 find_package(COLA REQUIRED)
 
-set(CMAKE_INSTALL_PREFIX ${COLA_DIR})
-set(COLA_MODULE_NAME Deexcitation)
-
-include(FetchContent)
 include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
-file(GLOB SOURCES
+set(CMAKE_INSTALL_PREFIX ${COLA_DIR})
+set(COLA_MODULE Deexcitation)
+
+set(CMAKE_BUILD_RPATH_USE_LINK_PATH TRUE)
+
+set(COLA_CMAKE_CXX_CLANG_TIDY
+    ""
+    CACHE STRING "Passed to CMAKE_CXX_CLANG_TIDY for ${COLA_MODULE} targets"
+)
+
+file(
+    GLOB SOURCES
+    CONFIGURE_DEPENDS
     Deexcitation/*.cpp
     Deexcitation/handler/*.cpp
 )
 
-add_library(${COLA_MODULE_NAME} SHARED ${SOURCES})
+add_library(${COLA_MODULE} SHARED ${SOURCES})
 
-target_link_libraries(${COLA_MODULE_NAME} COLA ${Geant4_LIBRARIES})
-target_include_directories(${COLA_MODULE_NAME} PUBLIC ${Geant4_INCLUDE_DIR})
+target_link_libraries(${COLA_MODULE} PUBLIC COLA ${Geant4_LIBRARIES})
+target_include_directories(${COLA_MODULE} PUBLIC ${Geant4_INCLUDE_DIR})
+target_compile_options(${COLA_MODULE} PRIVATE -Wall -Werror -Wextra -Wpedantic)
+target_compile_features(${COLA_MODULE} PRIVATE cxx_std_20)
 
-target_compile_options(${COLA_MODULE_NAME} PRIVATE -Wall -Werror -Wextra -Wpedantic)
-
-target_compile_features(${COLA_MODULE_NAME} PRIVATE cxx_std_17)
-
-target_include_directories(${COLA_MODULE_NAME} PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/Deexcitation>
+target_include_directories(
+    ${COLA_MODULE}
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+           $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/Deexcitation>
 )
 
-# Install the library and headers
-install(TARGETS ${COLA_MODULE_NAME}
-    EXPORT ${COLA_MODULE_NAME}Export
+set_target_properties(
+    ${COLA_MODULE}
+    PROPERTIES VERSION "${PROJECT_VERSION}"
+                 SOVERSION "${PROJECT_VERSION_MAJOR}"
+                 CXX_CLANG_TIDY "${COLA_CMAKE_CXX_CLANG_TIDY}"
+)
+
+install(
+    TARGETS ${COLA_MODULE}
+    EXPORT ${COLA_MODULE}Export
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -39,34 +60,40 @@ install(TARGETS ${COLA_MODULE_NAME}
 )
 
 install(
-    DIRECTORY ${COLA_MODULE_NAME}
+    DIRECTORY ${COLA_MODULE}
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     FILES_MATCHING
-        PATTERN "*.h"
+    PATTERN "*.h"
 )
 
-# Generate and install the package configuration file
-include(CMakePackageConfigHelpers)
 configure_package_config_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE_NAME}Config.cmake
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${COLA_MODULE_NAME}
+    ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE}Config.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${COLA_MODULE}
 )
 
 write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE_NAME}ConfigVersion.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE}ConfigVersion.cmake
     VERSION ${Deexcitation_VERSION}
     COMPATIBILITY AnyNewerVersion
 )
 
-install(FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE_NAME}Config.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE_NAME}ConfigVersion.cmake
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${COLA_MODULE_NAME}
+install(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE}Config.cmake
+          ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE}ConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${COLA_MODULE}
 )
 
-# Export the targets
-install(EXPORT ${COLA_MODULE_NAME}Export
-    FILE ${COLA_MODULE_NAME}Export.cmake
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${COLA_MODULE_NAME}
+install(
+    EXPORT ${COLA_MODULE}Export
+    FILE ${COLA_MODULE}Export.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${COLA_MODULE}
 )
+
+enable_testing()
+if (BUILD_TESTING)
+    add_subdirectory(tests)
+endif ()
+
+# format and tidy targets (exclude COLA from checks)
+setup_cola_quality_tools(EXCLUDE_PATTERNS ".*/COLA/.*")

@@ -1,62 +1,89 @@
+#include <cmath>
 #include <COLA.hh>
 #include <CLHEP/Units/PhysicalConstants.h>
 
-#include "Deexcitation/handler/ExcitationHandler.h"
-#include "Deexcitation/DeexcitationModule.h"
+#include "Deexcitation/G4HandlerFactory.h"
 
-class TestGenerator: public cola::VGenerator {
-public:
-  TestGenerator(const cola::EventParticles& particles) : particles_(particles) {}
+class TestGenerator final : public cola::VGenerator {
+ public:
+  explicit TestGenerator(cola::EventParticles particles) : particles_(std::move(particles)) {}
 
   std::unique_ptr<cola::EventData> operator()() override {
     auto data = std::make_unique<cola::EventData>();
     data->particles = particles_;
-
     return data;
   }
 
-private:
-  const cola::EventParticles particles_;
+ private:
+  cola::EventParticles particles_;
 };
 
-class TestGeneratorFactory: public cola::VFactory {
-public:
-  cola::VFilter* create(const std::map<std::string, std::string>&) override {
-    return new TestGenerator(particles);
+class TestGeneratorFactory final : public cola::VGeneratorFactory {
+ public:
+  std::unique_ptr<cola::VFilter> Create(const std::unordered_map<std::string, std::string>&) override {
+    return std::make_unique<TestGenerator>(particles_);
   }
 
-  cola::EventParticles particles;
+  const std::string& GetFilterName() const override {
+    static const std::string kName{"generator"};
+    return kName;
+  }
+
+  cola::EventParticles particles_;
 };
 
-class TestWriter: public cola::VWriter {
-public:
-  TestWriter(std::vector<std::unique_ptr<cola::EventData>>& holder) : events_(holder) {}
+class TestWriter final : public cola::VWriter {
+ public:
+  explicit TestWriter(std::shared_ptr<std::vector<std::unique_ptr<cola::EventData>>> sink) : sink_(std::move(sink)) {}
 
-  void operator()(std::unique_ptr<cola::EventData>&& event) {
-    events_.emplace_back(std::move(event));
-  }
+  void operator()(std::unique_ptr<cola::EventData>&& data) override { sink_->emplace_back(std::move(data)); }
 
-private:
-  std::vector<std::unique_ptr<cola::EventData>>& events_;
+ private:
+  std::shared_ptr<std::vector<std::unique_ptr<cola::EventData>>> sink_;
 };
 
-class TestWriterFactory: public cola::VFactory {
-public:
-  cola::VFilter* create(const std::map<std::string, std::string>&) override {
-    return new TestWriter(events);
+class TestWriterFactory final : public cola::VWriterFactory {
+ public:
+  explicit TestWriterFactory(std::shared_ptr<std::vector<std::unique_ptr<cola::EventData>>> sink)
+      : sink_(std::move(sink)) {}
+
+  std::unique_ptr<cola::VFilter> Create(const std::unordered_map<std::string, std::string>&) override {
+    return std::make_unique<TestWriter>(sink_);
   }
 
-  std::vector<std::unique_ptr<cola::EventData>> events;
+  const std::string& GetFilterName() const override {
+    static const std::string kName{"writer"};
+    return kName;
+  }
+
+ private:
+  std::shared_ptr<std::vector<std::unique_ptr<cola::EventData>>> sink_;
 };
 
 int main() {
-  cola::MetaProcessor metaProcessor;
-  TestGeneratorFactory* genFactory = new TestGeneratorFactory();
-  TestWriterFactory* writerFactory = new TestWriterFactory();
-  auto converter = new cola::FermiFactory();
-  metaProcessor.reg(std::unique_ptr<cola::VFactory>(genFactory), "generator", cola::FilterType::generator);
-  metaProcessor.reg(std::unique_ptr<cola::VFactory>(converter), "converter", cola::FilterType::converter);
-  metaProcessor.reg(std::unique_ptr<cola::VFactory>(writerFactory), "writer", cola::FilterType::writer);
-  auto manager = cola::ColaRunManager(metaProcessor.parse("config.xml"));
-  manager.run(1);
+  const cola::Particle particle{
+      .position = cola::LorentzVector{},
+      .momentum =
+          cola::LorentzVector{
+              .e = std::sqrt(3 * std::pow(100 * CLHEP::MeV, 2) + std::pow(4 * 938 * CLHEP::MeV, 2)),
+              .x = 100 * CLHEP::MeV,
+              .y = 100 * CLHEP::MeV,
+              .z = 100 * CLHEP::MeV,
+          },
+      .pdgCode = cola::AZToPdg({4, 2}),
+      .pClass = cola::ParticleClass::kSpectatorA,
+  };
+
+  auto sink = std::make_shared<std::vector<std::unique_ptr<cola::EventData>>>();
+
+  auto genFactory = std::make_unique<TestGeneratorFactory>();
+  genFactory->particles_ = cola::EventParticles{particle};
+
+  cola::MetaProcessor mp;
+  mp.Register(std::move(genFactory));
+  mp.Register(std::make_unique<cola::G4HandlerFactory>());
+  mp.Register(std::make_unique<TestWriterFactory>(sink));
+
+  cola::ColaRunManager manager(mp.Parse("config.xml"));
+  manager.Run(1);
 }

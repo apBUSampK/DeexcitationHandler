@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, dev ]
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+    branches: [ main, master, dev ]
+  pull_request_target:
+    types: [ opened, synchronize, reopened ]
+    branches: [ main, master, dev ]
+
+jobs:
+  ci:
+    name: CI (Ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      CXX: g++
+
+    steps:
+      - name: Checkout DeexcitationHandler
+        uses: actions/checkout@v6
+
+      - name: Checkout COLA
+        uses: actions/checkout@v6
+        with:
+          repository: Spectator-matter-group-INR-RAS/COLA
+          ref: main
+          path: COLA
+
+      - name: Checkout Geant4
+        uses: actions/checkout@v6
+        with:
+          repository: Geant4/geant4
+          ref: v11.4.1
+          path: geant4
+          fetch-depth: 1
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build \
+            libexpat1-dev zlib1g-dev libgtest-dev g++ clang-format-19 clang-tidy
+          pip install cmake-format
+
+      - name: Build and install Geant4
+        run: |
+          cmake -S geant4 -B build_g4 -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr/local \
+            -DCMAKE_PREFIX_PATH=/usr/local \
+            -DGEANT4_USE_SYSTEM_EXPAT=ON \
+            -DGEANT4_USE_SYSTEM_ZLIB=ON \
+            -DGEANT4_INSTALL_DATA=OFF \
+            -DGEANT4_BUILD_EXAMPLES=OFF \
+            -DGEANT4_USE_GDML=OFF \
+            -DGEANT4_USE_QT=OFF
+          cmake --build build_g4 --parallel "$(nproc)"
+          sudo cmake --install build_g4
+
+      - name: Build and install COLA
+        working-directory: COLA
+        run: |
+          cmake --preset release
+          cmake --build --preset release --parallel "$(nproc)"
+          sudo cmake --install build/release
+
+      - name: Test Deexcitation
+        run: |
+          export CMAKE_BUILD_PARALLEL_LEVEL="$(nproc)"
+          cmake --workflow release-test
+
+      - name: Clang-tidy
+        id: clang-tidy
+        run: |
+          export CMAKE_BUILD_PARALLEL_LEVEL="$(nproc)"
+          cmake --workflow test
+
+      - name: Check formatting
+        id: check-format
+        if: always()
+        run: cmake --workflow check-format

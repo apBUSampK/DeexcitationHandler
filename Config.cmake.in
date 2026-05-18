@@ -4,6 +4,5 @@ include(CMakeFindDependencyMacro)
 
 find_dependency(COLA REQUIRED)
 find_dependency(Geant4 REQUIRED)
-find_dependency(CLHEP REQUIRED)
 
 include(@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@/cmake/Deexcitation/DeexcitationExport.cmake)

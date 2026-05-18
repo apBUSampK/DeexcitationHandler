@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DEEXCITATION_HANDLER_EXCITATIONHANDLER_H_
+#define DEEXCITATION_HANDLER_EXCITATIONHANDLER_H_
 
 #include <functional>
 #include <memory>
@@ -87,51 +88,56 @@ class ExcitationHandler {
   }
 
   template <class F>
-  ExcitationHandler& SetMultiFragmentationCondition(F&& f) {
-    multiFragmentationCondition_ = std::forward<F>(f);
+  ExcitationHandler& SetMultiFragmentationCondition(F&& func) {
+    multiFragmentationCondition_ = std::forward<F>(func);
     return *this;
   }
 
+  // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
   ExcitationHandler& SetMultiFragmentationCondition() {
     return SetMultiFragmentationCondition(DefaultMultiFragmentationCondition());
   }
 
   template <class F>
-  ExcitationHandler& SetFermiBreakUpCondition(F&& f) {
-    fermiCondition_ = std::forward<F>(f);
+  ExcitationHandler& SetFermiBreakUpCondition(F&& func) {
+    fermiCondition_ = std::forward<F>(func);
     return *this;
   }
 
+  // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
   ExcitationHandler& SetFermiBreakUpCondition() {
     return SetFermiBreakUpCondition(DefaultFermiBreakUpCondition());
   }
 
   template <class F>
-  ExcitationHandler& SetEvaporationCondition(F&& f) {
-    evaporationCondition_ = std::forward<F>(f);
+  ExcitationHandler& SetEvaporationCondition(F&& func) {
+    evaporationCondition_ = std::forward<F>(func);
     return *this;
   }
 
+  // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
   ExcitationHandler& SetEvaporationCondition() {
     return SetEvaporationCondition(DefaultEvaporationCondition());
   }
 
   template <class F>
-  ExcitationHandler& SetPhotonEvaporationCondition(F&& f) {
-    photonEvaporationCondition_ = std::forward<F>(f);
+  ExcitationHandler& SetPhotonEvaporationCondition(F&& func) {
+    photonEvaporationCondition_ = std::forward<F>(func);
     return *this;
   }
 
+  // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
   ExcitationHandler& SetPhotonEvaporationCondition() {
     return SetPhotonEvaporationCondition(DefaultPhotonEvaporationCondition());
   }
 
   template <class F>
-  ExcitationHandler& SetNeutronDecayCondition(F&& f) {
-    neutronDecayCondition_ = std::forward<F>(f);
+  ExcitationHandler& SetNeutronDecayCondition(F&& func) {
+    neutronDecayCondition_ = std::forward<F>(func);
     return *this;
   }
 
+  // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
   ExcitationHandler& SetNeutronDecayCondition() {
     return SetNeutronDecayCondition(DefaultNeutronDecayCondition());
   }
@@ -238,3 +244,5 @@ class ExcitationHandler {
 
   double stableThreshold_ = 0.;
 };
+
+#endif  // DEEXCITATION_HANDLER_EXCITATIONHANDLER_H_
