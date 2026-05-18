@@ -6,18 +6,17 @@ on:
   pull_request:
     types: [ opened, synchronize, reopened ]
     branches: [ main, master, dev ]
-  pull_request_target:
-    types: [ opened, synchronize, reopened ]
-    branches: [ main, master, dev ]
 
 jobs:
   ci:
     name: CI (Ubuntu)
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 60
     env:
       CXX: g++
       G4_VERSION: v11.4.0
+      # Outside the checkout tree: CMake rejects Geant4 includes under CMAKE_SOURCE_DIR.
+      G4_INSTALL: /home/runner/.geant4
 
     steps:
       - name: Checkout DeexcitationHandler
@@ -38,25 +37,38 @@ jobs:
           path: geant4
           fetch-depth: 1
 
+      - name: Cache Geant4 build and install
+        uses: actions/cache@v4
+        with:
+          path: |
+            geant4/build
+            .geant4
+          key: geant4-${{ env.G4_VERSION }}-${{ runner.os }}-v2
+
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build \
+          sudo apt-get install -y build-essential cmake \
             libexpat1-dev zlib1g-dev libgtest-dev g++ clang-format-19 clang-tidy
           pip install cmake-format
 
       - name: Build and install Geant4
         run: |
-          cmake -S geant4 -B geant4/build -G Ninja \
+          if [ -f "${G4_INSTALL}/bin/geant4.sh" ]; then
+            echo "Geant4 install found in cache"
+            exit 0
+          fi
+
+          cmake -S geant4 -B geant4/build \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_INSTALL_PREFIX=/usr/local \
+            -DCMAKE_INSTALL_PREFIX="${G4_INSTALL}" \
             -DGEANT4_USE_SYSTEM_EXPAT=ON \
             -DGEANT4_USE_SYSTEM_ZLIB=ON \
             -DGEANT4_INSTALL_DATA=ON \
             -DGEANT4_USE_GDML=OFF \
             -DGEANT4_USE_QT=OFF
           cmake --build geant4/build --parallel "$(nproc)"
-          sudo cmake --install geant4/build
+          cmake --install geant4/build
 
       - name: Build and install COLA
         working-directory: COLA
@@ -67,12 +79,14 @@ jobs:
 
       - name: Test Deexcitation
         run: |
+          source "${G4_INSTALL}/bin/geant4.sh"
           export CMAKE_BUILD_PARALLEL_LEVEL="$(nproc)"
           cmake --workflow release-test
 
       - name: Clang-tidy
         id: clang-tidy
         run: |
+          source "${G4_INSTALL}/bin/geant4.sh"
           export CMAKE_BUILD_PARALLEL_LEVEL="$(nproc)"
           cmake --workflow test
 
