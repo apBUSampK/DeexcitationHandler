@@ -38,13 +38,13 @@ namespace cola {
   std::unique_ptr<EventData> G4HandlerConverter::operator()(std::unique_ptr<EventData>&& data) {
     EventParticles results;
     for (const auto& particle : data->particles) {
-      const auto pClass = particle.pClass;
-      if (pClass == ParticleClass::kSpectatorA || pClass == ParticleClass::kSpectatorB) {
-        const auto modelResult = model_->BreakItUp(ColaToG4(particle));
+      const auto particle_class = particle.pClass;
+      if (particle_class == ParticleClass::kSpectatorA || particle_class == ParticleClass::kSpectatorB) {
+        const auto model_result = model_->BreakItUp(ColaToG4(particle));
 
-        for (const auto& fragment : modelResult) {
+        for (const auto& fragment : model_result) {
           results.emplace_back(G4ToCola(fragment));
-          results.back().pClass = pClass;
+          results.back().pClass = particle_class;
         }
       } else {
         results.push_back(particle);

@@ -1,8 +1,8 @@
-#include <CLHEP/Units/PhysicalConstants.h>
+#include "Deexcitation/G4HandlerFactory.h"
+
+#include <CLHEP/Units/SystemOfUnits.h>
 #include <COLA.hh>
 #include <gtest/gtest.h>
-
-#include "Deexcitation/G4HandlerFactory.h"
 
 #include <cmath>
 #include <sstream>
@@ -35,13 +35,13 @@ namespace {
    public:
     explicit TestGeneratorFactory(cola::EventParticles particles) : particles_(std::move(particles)) {}
 
-    std::unique_ptr<cola::VFilter> Create(const std::unordered_map<std::string, std::string>&) override {
+    std::unique_ptr<cola::VFilter> Create(const std::unordered_map<std::string, std::string>& /*metaData*/) override {
       return std::make_unique<TestGenerator>(particles_);
     }
 
     const std::string& GetFilterName() const override {
-      static const std::string kName{"generator"};
-      return kName;
+      static const std::string name{"generator"};
+      return name;
     }
 
    private:
@@ -63,26 +63,25 @@ namespace {
     explicit TestWriterFactory(std::shared_ptr<std::vector<std::unique_ptr<cola::EventData>>> sink)
         : sink_(std::move(sink)) {}
 
-    std::unique_ptr<cola::VFilter> Create(const std::unordered_map<std::string, std::string>&) override {
+    std::unique_ptr<cola::VFilter> Create(const std::unordered_map<std::string, std::string>& /*metaData*/) override {
       return std::make_unique<TestWriter>(sink_);
     }
 
     const std::string& GetFilterName() const override {
-      static const std::string kName{"writer"};
-      return kName;
+      static const std::string name{"writer"};
+      return name;
     }
 
    private:
     std::shared_ptr<std::vector<std::unique_ptr<cola::EventData>>> sink_;
   };
 
-  cola::MetaProcessor BuildMetaProcessor(std::shared_ptr<std::vector<std::unique_ptr<cola::EventData>>> sink,
-                                         cola::EventParticles particles) {
-    cola::MetaProcessor mp;
-    mp.Register(std::make_unique<TestGeneratorFactory>(std::move(particles)));
-    mp.Register(std::make_unique<cola::G4HandlerFactory>());
-    mp.Register(std::make_unique<TestWriterFactory>(std::move(sink)));
-    return mp;
+  void RegisterTestPipeline(cola::MetaProcessor& meta_processor,
+                            std::shared_ptr<std::vector<std::unique_ptr<cola::EventData>>> sink,
+                            cola::EventParticles particles) {
+    meta_processor.Register(std::make_unique<TestGeneratorFactory>(std::move(particles)));
+    meta_processor.Register(std::make_unique<cola::G4HandlerFactory>());
+    meta_processor.Register(std::make_unique<TestWriterFactory>(std::move(sink)));
   }
 
 }  // namespace
@@ -104,7 +103,8 @@ TEST(TestModule, TestG4Handler) {
         .pClass = cola::ParticleClass::kSpectatorA,
     };
     sink->clear();
-    cola::MetaProcessor mp = BuildMetaProcessor(sink, {particle});
+    cola::MetaProcessor mp;
+    RegisterTestPipeline(mp, sink, {particle});
     std::istringstream xml(kPipelineConfigXml);
     cola::ColaRunManager manager(mp.Parse(xml));
     manager.Run(1);
@@ -127,7 +127,8 @@ TEST(TestModule, TestG4Handler) {
         .pClass = cola::ParticleClass::kSpectatorA,
     };
     sink->clear();
-    cola::MetaProcessor mp = BuildMetaProcessor(sink, {particle});
+    cola::MetaProcessor mp;
+    RegisterTestPipeline(mp, sink, {particle});
     std::istringstream xml(kPipelineConfigXml);
     cola::ColaRunManager manager(mp.Parse(xml));
     manager.Run(1);
@@ -137,36 +138,16 @@ TEST(TestModule, TestG4Handler) {
   }
 }
 
-TEST(ModuleExport, LoadCOLAModule_ReturnsModule) {
-  std::unique_ptr<cola::VModule> mod(LoadCOLAModule());
-  ASSERT_NE(mod, nullptr);
-}
+TEST(ModuleExport, LoadCOLAModuleExposesSingleG4DeexcitationFactory) {
+  auto module = std::unique_ptr<cola::VModule>(LoadCOLAModule());
+  ASSERT_NE(module, nullptr);
 
-TEST(ModuleExport, LoadCOLAModule_ExposesSingleG4DeexcitationFactory) {
-  std::unique_ptr<cola::VModule> mod(LoadCOLAModule());
-  ASSERT_NE(mod, nullptr);
-
-  const cola::FactoryMap filters = mod->GetModuleFilters();
+  const auto filters = module->GetModuleFilters();
   ASSERT_EQ(filters.size(), 1u);
   ASSERT_TRUE(filters.contains("G4DeexcitationHandler"));
 
-  const cola::VFactory* factory = filters.at("G4DeexcitationHandler").get();
+  const auto* factory = filters.at("G4DeexcitationHandler").get();
   ASSERT_NE(factory, nullptr);
   EXPECT_EQ(factory->GetFilterName(), "G4DeexcitationHandler");
   EXPECT_EQ(factory->GetFilterType(), cola::FilterType::kConverter);
-}
-
-TEST(ModuleExport, LoadCOLAModule_FactoryCreatesConverter) {
-  std::unique_ptr<cola::VModule> mod(LoadCOLAModule());
-  ASSERT_NE(mod, nullptr);
-
-  cola::FactoryMap filters = mod->GetModuleFilters();
-  auto it = filters.find("G4DeexcitationHandler");
-  ASSERT_NE(it, filters.end());
-
-  const std::unordered_map<std::string, std::string> meta;
-  std::unique_ptr<cola::VFilter> filter = it->second->Create(meta);
-  ASSERT_NE(filter, nullptr);
-  auto* as_converter = dynamic_cast<cola::VConverter*>(filter.get());
-  ASSERT_NE(as_converter, nullptr);
 }

@@ -77,11 +77,11 @@ int main() {
 
   auto sink = std::make_shared<std::vector<std::unique_ptr<cola::EventData>>>();
 
-  auto genFactory = std::make_unique<TestGeneratorFactory>();
-  genFactory->particles_ = cola::EventParticles{particle};
+  auto generator_factory = std::make_unique<TestGeneratorFactory>();
+  generator_factory->particles_ = cola::EventParticles{particle};
 
   cola::MetaProcessor mp;
-  mp.Register(std::move(genFactory));
+  mp.Register(std::move(generator_factory));
   mp.Register(std::make_unique<cola::G4HandlerFactory>());
   mp.Register(std::make_unique<TestWriterFactory>(sink));
 

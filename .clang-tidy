@@ -79,15 +79,15 @@ CheckOptions:
   - key: readability-identifier-length.MinimumVariableNameLength
     value: 2
   - key: readability-identifier-length.IgnoredVariableNames
-    value: '^(i|j|k|x|y|z|n|a|b|A|Z)$'
+    value: '^(i|j|k|x|y|z|n|a|b|A|Z|it)$'
   - key: readability-identifier-length.MinimumParameterNameLength
     value: 2
   - key: readability-identifier-length.IgnoredParameterNames
-    value: '^(i|j|k|x|y|z|n|a|b)$'
+    value: '^(i|j|k|x|y|z|n|a|b|A|Z)$'
   - key: readability-identifier-length.MinimumLoopCounterNameLength
     value: 3
   - key: readability-identifier-length.IgnoredLoopCounterNames
-    value: '^(i|j|k|n)$'
+    value: '^(i|j|k|n|it)$'
   - key: readability-identifier-length.MinimumExceptionNameLength
     value: 3
   - key: readability-identifier-length.IgnoredExceptionVariableNames
