@@ -33,53 +33,54 @@ namespace {
   struct Config {
     explicit Config(const std::unordered_map<std::string, std::string>& params) {
       if (const auto it = params.find("A"); it != params.end()) {
-        A = std::stoi(it->second);
+        atomic_mass = std::stoi(it->second);
       }
       if (const auto it = params.find("Z"); it != params.end()) {
-        Z = std::stoi(it->second);
+        charge = std::stoi(it->second);
       }
       if (const auto it = params.find("lowerMfThreshold"); it != params.end()) {
-        lowerMfThreshold = StodWithFactor(it->second);
+        lower_mf_threshold = StodWithFactor(it->second);
       }
       if (const auto it = params.find("upperMfThreshold"); it != params.end()) {
-        upperMfThreshold = StodWithFactor(it->second);
+        upper_mf_threshold = StodWithFactor(it->second);
       }
       if (const auto it = params.find("stableThreshold"); it != params.end()) {
-        stableThreshold = StodWithFactor(it->second);
+        stable_threshold = StodWithFactor(it->second);
       }
     }
 
-    std::optional<int> A;
-    std::optional<int> Z;
-    std::optional<double> stableThreshold;
-    std::optional<double> lowerMfThreshold;
-    std::optional<double> upperMfThreshold;
+    std::optional<int> atomic_mass;
+    std::optional<int> charge;
+    std::optional<double> stable_threshold;
+    std::optional<double> lower_mf_threshold;
+    std::optional<double> upper_mf_threshold;
   };
 
 }  // namespace
 
 namespace cola {
 
-  std::unique_ptr<VFilter> G4HandlerFactory::Create(const std::unordered_map<std::string, std::string>& metaData) {
-    const Config config(metaData);
+  std::unique_ptr<VFilter> G4HandlerFactory::Create(const std::unordered_map<std::string, std::string>& meta_data) {
+    const Config config(meta_data);
 
     auto model = std::make_unique<ExcitationHandler>();
 
-    if (config.stableThreshold.has_value()) {
-      model->SetStableThreshold(*config.stableThreshold);
+    if (config.stable_threshold.has_value()) {
+      model->SetStableThreshold(*config.stable_threshold);
     }
 
     model->SetFermiBreakUpCondition(
-        [max_a = config.A.value_or(static_cast<int>(MAX_A)),
-         max_z = config.Z.value_or(static_cast<int>(MAX_Z))](const G4Fragment& fragment) -> bool {
+        [max_a = config.atomic_mass.value_or(static_cast<int>(MAX_A)),
+         max_z = config.charge.value_or(static_cast<int>(MAX_Z))](const G4Fragment& fragment) -> bool {
           return fragment.GetZ_asInt() < max_z && fragment.GetA_asInt() < max_a;
         });
 
     model->SetMultiFragmentationCondition(
-        [max_a = config.A.value_or(static_cast<int>(MAX_A)), max_z = config.Z.value_or(static_cast<int>(MAX_Z)),
-         lower_bound_transition_mf = config.lowerMfThreshold.value_or(3 * CLHEP::MeV),
+        [max_a = config.atomic_mass.value_or(static_cast<int>(MAX_A)),
+         max_z = config.charge.value_or(static_cast<int>(MAX_Z)),
+         lower_bound_transition_mf = config.lower_mf_threshold.value_or(3 * CLHEP::MeV),
          upper_bound_transition_mf =
-             config.upperMfThreshold.value_or(5 * CLHEP::MeV)](const G4Fragment& fragment) -> bool {
+             config.upper_mf_threshold.value_or(5 * CLHEP::MeV)](const G4Fragment& fragment) -> bool {
           const auto a = fragment.GetA_asInt();
           const auto z = fragment.GetZ_asInt();
           const auto ex = fragment.GetExcitationEnergy();

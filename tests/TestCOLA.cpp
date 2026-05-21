@@ -35,7 +35,7 @@ namespace {
    public:
     explicit TestGeneratorFactory(cola::EventParticles particles) : particles_(std::move(particles)) {}
 
-    std::unique_ptr<cola::VFilter> Create(const std::unordered_map<std::string, std::string>& /*metaData*/) override {
+    std::unique_ptr<cola::VFilter> Create(const std::unordered_map<std::string, std::string>& /*meta_data*/) override {
       return std::make_unique<TestGenerator>(particles_);
     }
 
@@ -63,7 +63,7 @@ namespace {
     explicit TestWriterFactory(std::shared_ptr<std::vector<std::unique_ptr<cola::EventData>>> sink)
         : sink_(std::move(sink)) {}
 
-    std::unique_ptr<cola::VFilter> Create(const std::unordered_map<std::string, std::string>& /*metaData*/) override {
+    std::unique_ptr<cola::VFilter> Create(const std::unordered_map<std::string, std::string>& /*meta_data*/) override {
       return std::make_unique<TestWriter>(sink_);
     }
 
@@ -99,8 +99,8 @@ TEST(TestModule, TestG4Handler) {
                 .y = 100 * CLHEP::MeV,
                 .z = 100 * CLHEP::MeV,
             },
-        .pdgCode = cola::AZToPdg({4, 2}),
-        .pClass = cola::ParticleClass::kSpectatorA,
+        .pdg_code = cola::AZToPdg({4, 2}),
+        .p_class = cola::ParticleClass::kSpectatorA,
     };
     sink->clear();
     cola::MetaProcessor mp;
@@ -123,8 +123,8 @@ TEST(TestModule, TestG4Handler) {
                 .y = 100 * CLHEP::MeV,
                 .z = 100 * CLHEP::MeV,
             },
-        .pdgCode = cola::AZToPdg({5, 3}),
-        .pClass = cola::ParticleClass::kSpectatorA,
+        .pdg_code = cola::AZToPdg({5, 3}),
+        .p_class = cola::ParticleClass::kSpectatorA,
     };
     sink->clear();
     cola::MetaProcessor mp;

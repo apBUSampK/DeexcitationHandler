@@ -7,7 +7,7 @@ namespace cola {
 
   class G4HandlerFactory final : public VConverterFactory {
    public:
-    std::unique_ptr<VFilter> Create(const std::unordered_map<std::string, std::string>& metaData) override;
+    std::unique_ptr<VFilter> Create(const std::unordered_map<std::string, std::string>& meta_data) override;
 
     const std::string& GetFilterName() const override {
       static const std::string name{"G4DeexcitationHandler"};

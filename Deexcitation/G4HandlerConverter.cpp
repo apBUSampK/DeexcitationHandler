@@ -6,10 +6,10 @@
 namespace {
 
   G4Fragment ColaToG4(const cola::Particle& particle) {
-    const auto [A, Z] = particle.GetAZ();
+    const auto [atomic_mass, charge] = particle.GetAZ();
 
     return G4Fragment(
-        static_cast<G4int>(A), static_cast<G4int>(Z),
+        static_cast<G4int>(atomic_mass), static_cast<G4int>(charge),
         G4LorentzVector(particle.momentum.x, particle.momentum.y, particle.momentum.z, particle.momentum.e));
   }
 
@@ -23,9 +23,9 @@ namespace {
                 .y = fragment.GetMomentum().y(),
                 .z = fragment.GetMomentum().z(),
             },
-        .pdgCode = cola::AZToPdg({static_cast<uint16_t>(fragment.GetDefinition()->GetAtomicMass()),
-                                  static_cast<uint16_t>(fragment.GetDefinition()->GetAtomicNumber())}),
-        .pClass = cola::ParticleClass::kProduced,
+        .pdg_code = cola::AZToPdg({static_cast<uint16_t>(fragment.GetDefinition()->GetAtomicMass()),
+                                   static_cast<uint16_t>(fragment.GetDefinition()->GetAtomicNumber())}),
+        .p_class = cola::ParticleClass::kProduced,
     };
   }
 
@@ -38,13 +38,13 @@ namespace cola {
   std::unique_ptr<EventData> G4HandlerConverter::operator()(std::unique_ptr<EventData>&& data) {
     EventParticles results;
     for (const auto& particle : data->particles) {
-      const auto particle_class = particle.pClass;
+      const auto particle_class = particle.p_class;
       if (particle_class == ParticleClass::kSpectatorA || particle_class == ParticleClass::kSpectatorB) {
         const auto model_result = model_->BreakItUp(ColaToG4(particle));
 
         for (const auto& fragment : model_result) {
           results.emplace_back(G4ToCola(fragment));
-          results.back().pClass = particle_class;
+          results.back().p_class = particle_class;
         }
       } else {
         results.push_back(particle);
