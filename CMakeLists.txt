@@ -16,8 +16,6 @@ include(CMakePackageConfigHelpers)
 set(CMAKE_INSTALL_PREFIX ${COLA_DIR})
 set(COLA_MODULE Deexcitation)
 
-set(CMAKE_BUILD_RPATH_USE_LINK_PATH TRUE)
-
 set(COLA_CMAKE_CXX_CLANG_TIDY
     ""
     CACHE STRING "Passed to CMAKE_CXX_CLANG_TIDY for ${COLA_MODULE} targets"
@@ -42,6 +40,7 @@ set_target_properties(
     PROPERTIES VERSION "${PROJECT_VERSION}"
                SOVERSION "${PROJECT_VERSION_MAJOR}"
                CXX_CLANG_TIDY "${COLA_CMAKE_CXX_CLANG_TIDY}"
+               INSTALL_RPATH_USE_LINK_PATH TRUE
 )
 
 install(
