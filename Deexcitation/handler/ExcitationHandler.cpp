@@ -44,8 +44,8 @@ namespace {
    public:
     using G4FermiBreakUpAN::G4FermiBreakUpAN;
 
-    void BreakFragment(G4FragmentVector* results, G4Fragment* theNucleus) override {
-      auto* deletable_fragment = new G4Fragment(*theNucleus);
+    void BreakFragment(G4FragmentVector* results, G4Fragment* the_nucleus) override {
+      auto* deletable_fragment = new G4Fragment(*the_nucleus);
       auto old_size = results->size();
       G4FermiBreakUpAN::BreakFragment(results, deletable_fragment);
       if (old_size == results->size()) {
@@ -77,7 +77,7 @@ namespace {
     }
   }
 
-  constexpr G4int HashParticle(G4int A, G4int Z) { return A * 1000 + Z; }
+  constexpr G4int HashParticle(G4int atomic_mass, G4int charge) { return atomic_mass * 1000 + charge; }
 
   G4ParticleDefinition* SpecialParticleDefinition(const G4Fragment& fragment) {
     switch (HashParticle(fragment.GetA_asInt(), fragment.GetZ_asInt())) {
@@ -131,29 +131,29 @@ namespace {
     }
   }
 
-  void EvaporationError(const G4Fragment& fragment, const G4Fragment& currentFragment, size_t iterationCount) {
+  void EvaporationError(const G4Fragment& fragment, const G4Fragment& current_fragment, size_t iteration_count) {
     G4ExceptionDescription ed;
-    ed << "Infinite loop in the de-excitation module: " << iterationCount << " iterations \n"
+    ed << "Infinite loop in the de-excitation module: " << iteration_count << " iterations \n"
        << "      Initial fragment: \n"
        << fragment << "\n      Current fragment: \n"
-       << currentFragment;
+       << current_fragment;
     G4Exception("ExcitationHandler::BreakItUp", "", FatalException, ed, "Stop execution");
   }
 }  // namespace
 
 ExcitationHandler::ExcitationHandler()
-    : multiFragmentationModel_(DefaultMultiFragmentation())
-    , fermiBreakUpModel_(DefaultFermiBreakUp())
-    , evaporationModel_(DefaultEvaporation())
-    , photonEvaporationModel_(DefaultPhotonEvaporation())
-    , neutronDecayModel_(DefaultNeutronDecay())
-    , multiFragmentationCondition_(DefaultMultiFragmentationCondition())
-    , fermiCondition_(DefaultFermiBreakUpCondition())
-    , photonEvaporationCondition_(DefaultPhotonEvaporationCondition())
-    , evaporationCondition_(DefaultEvaporationCondition())
-    , neutronDecayCondition_(DefaultNeutronDecayCondition()) {
-  evaporationModel_->SetFermiBreakUp(fermiBreakUpModel_.get());
-  evaporationModel_->SetPhotonEvaporation(photonEvaporationModel_.get());
+    : multi_fragmentation_model_(DefaultMultiFragmentation())
+    , fermi_break_up_model_(DefaultFermiBreakUp())
+    , evaporation_model_(DefaultEvaporation())
+    , photon_evaporation_model_(DefaultPhotonEvaporation())
+    , neutron_decay_model_(DefaultNeutronDecay())
+    , multi_fragmentation_condition_(DefaultMultiFragmentationCondition())
+    , fermi_condition_(DefaultFermiBreakUpCondition())
+    , photon_evaporation_condition_(DefaultPhotonEvaporationCondition())
+    , evaporation_condition_(DefaultEvaporationCondition())
+    , neutron_decay_condition_(DefaultNeutronDecayCondition()) {
+  evaporation_model_->SetFermiBreakUp(fermi_break_up_model_.get());
+  evaporation_model_->SetPhotonEvaporation(photon_evaporation_model_.get());
 
   G4BosonConstructor::ConstructParticle();
   G4LeptonConstructor::ConstructParticle();
@@ -176,7 +176,7 @@ ExcitationHandler::ExcitationHandler()
 
 ExcitationHandler::~ExcitationHandler() {
   // NOLINTNEXTLINE(bugprone-unused-return-value)
-  photonEvaporationModel_.release();  // otherwise, SegFault in evaporation destructor
+  photon_evaporation_model_.release();  // otherwise, SegFault in evaporation destructor
 }
 
 std::vector<G4ReactionProduct> ExcitationHandler::BreakItUp(const G4Fragment& fragment) {
@@ -188,12 +188,12 @@ std::vector<G4ReactionProduct> ExcitationHandler::BreakItUp(const G4Fragment& fr
 
   // In case A <= 1 the fragment will not perform any nucleon emission
   auto initial_fragment_ptr = std::make_unique<G4Fragment>(fragment);
-  if (neutronDecayCondition_(fragment)) {
+  if (neutron_decay_condition_(fragment)) {
     ApplyPureNeutronDecay(std::move(initial_fragment_ptr), results);
   } else if (IsStable(fragment, nist)) {
     results.push_back(initial_fragment_ptr.release());
   } else {
-    if (multiFragmentationCondition_(fragment)) {
+    if (multi_fragmentation_condition_(fragment)) {
       ApplyMultiFragmentation(std::move(initial_fragment_ptr), results, evaporation_queue);
     } else {
       evaporation_queue.emplace(std::move(initial_fragment_ptr));
@@ -211,19 +211,19 @@ std::vector<G4ReactionProduct> ExcitationHandler::BreakItUp(const G4Fragment& fr
       }
 
       // NeutronDecay part
-      if (neutronDecayCondition_(*fragment_ptr)) {
+      if (neutron_decay_condition_(*fragment_ptr)) {
         ApplyPureNeutronDecay(std::move(fragment_ptr), results);
         continue;
       }
 
       // FermiBreakUp part
-      if (fermiCondition_(*fragment_ptr)) {
+      if (fermi_condition_(*fragment_ptr)) {
         ApplyFermiBreakUp(std::move(fragment_ptr), results, photon_evaporation_queue);
         continue;
       }
 
       // Evaporation part
-      if (evaporationCondition_(*fragment_ptr)) {
+      if (evaporation_condition_(*fragment_ptr)) {
         ApplyEvaporation(std::move(fragment_ptr), results, evaporation_queue);
         continue;
       }
@@ -236,7 +236,7 @@ std::vector<G4ReactionProduct> ExcitationHandler::BreakItUp(const G4Fragment& fr
       auto fragment_ptr = std::move(photon_evaporation_queue.front());
       photon_evaporation_queue.pop();
 
-      if (photonEvaporationCondition_(*fragment_ptr)) {
+      if (photon_evaporation_condition_(*fragment_ptr)) {
         ApplyPhotonEvaporation(std::move(fragment_ptr), results);
         continue;
       }
@@ -249,7 +249,7 @@ std::vector<G4ReactionProduct> ExcitationHandler::BreakItUp(const G4Fragment& fr
 
   G4FragmentVector buffer;
   for (auto it = results.begin(); it != results.end();) {
-    if (neutronDecayCondition_(**it)) {
+    if (neutron_decay_condition_(**it)) {
       buffer.push_back(*it);
       it = results.erase(it);
     } else {
@@ -283,7 +283,7 @@ void ExcitationHandler::NeutronDecay::BreakFragment(G4FragmentVector& results, c
     momentum.setE(momentum.e() + 10. * CLHEP::eV - mass_excess);
   }
 
-  const auto particles_momentum = phaseSpaceDecay_.CalculateDecay(momentum, masses);
+  const auto particles_momentum = phase_space_decay_.CalculateDecay(momentum, masses);
   if (particles_momentum.empty()) {
     std::stringstream ss;
     ss << "NeutronDecay is unable to break particle with "
@@ -379,7 +379,7 @@ ExcitationHandler::Condition ExcitationHandler::DefaultNeutronDecayCondition() {
 }
 
 bool ExcitationHandler::IsGroundState(const G4Fragment& fragment) const {
-  return fragment.GetExcitationEnergy() < stableThreshold_;
+  return fragment.GetExcitationEnergy() < stable_threshold_;
 }
 
 bool ExcitationHandler::IsStable(const G4Fragment& fragment, const G4NistManager* nist) const {
@@ -388,35 +388,35 @@ bool ExcitationHandler::IsStable(const G4Fragment& fragment, const G4NistManager
 }
 
 void ExcitationHandler::ApplyMultiFragmentation(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results,
-                                                FragmentQueue& nextStage) {
-  auto fragments = std::unique_ptr<G4FragmentVector>(multiFragmentationModel_->BreakItUp(*fragment));
+                                                FragmentQueue& next_stage) {
+  auto fragments = std::unique_ptr<G4FragmentVector>(multi_fragmentation_model_->BreakItUp(*fragment));
   if (fragments == nullptr || fragments->size() <= 1) {
     ClearSingularResults(*fragments, fragment.get());
-    nextStage.emplace(fragment.release());
+    next_stage.emplace(fragment.release());
     return;
   }
 
-  GroupFragments(std::move(*fragments), results, nextStage);
+  GroupFragments(std::move(*fragments), results, next_stage);
 }
 
 void ExcitationHandler::ApplyFermiBreakUp(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results,
-                                          FragmentQueue& nextStage) {
+                                          FragmentQueue& next_stage) {
   G4FragmentVector fragments;
-  fermiBreakUpModel_->BreakFragment(&fragments, fragment.get());
+  fermi_break_up_model_->BreakFragment(&fragments, fragment.get());
 
   if (fragments.size() <= 1) {
     ClearSingularResults(fragments, fragment.get());
-    nextStage.emplace(fragment.release());
+    next_stage.emplace(fragment.release());
     return;
   }
 
-  GroupFragments(std::move(fragments), results, nextStage);
+  GroupFragments(std::move(fragments), results, next_stage);
 }
 
 void ExcitationHandler::ApplyEvaporation(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results,
-                                         FragmentQueue& nextStage) {
+                                         FragmentQueue& next_stage) {
   G4FragmentVector fragments;
-  evaporationModel_->BreakFragment(&fragments, fragment.get());
+  evaporation_model_->BreakFragment(&fragments, fragment.get());
 
   if (fragments.size() <= 1) {
     ClearSingularResults(fragments, fragment.get());
@@ -424,7 +424,7 @@ void ExcitationHandler::ApplyEvaporation(std::unique_ptr<G4Fragment>&& fragment,
     return;
   }
 
-  GroupFragments(std::move(fragments), results, nextStage);
+  GroupFragments(std::move(fragments), results, next_stage);
 }
 
 void ExcitationHandler::ApplyPhotonEvaporation(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results) {
@@ -432,7 +432,7 @@ void ExcitationHandler::ApplyPhotonEvaporation(std::unique_ptr<G4Fragment>&& fra
   if (!IsGroundState(*fragment)) {
     G4FragmentVector fragments;
 
-    photonEvaporationModel_->BreakUpChain(&fragments, fragment.get());
+    photon_evaporation_model_->BreakUpChain(&fragments, fragment.get());
 
     for (auto* fragment_ptr : fragments) {
       results.emplace_back(fragment_ptr);
@@ -445,7 +445,7 @@ void ExcitationHandler::ApplyPhotonEvaporation(std::unique_ptr<G4Fragment>&& fra
 
 void ExcitationHandler::ApplyPureNeutronDecay(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results) {
   size_t old_size = results.size();
-  neutronDecayModel_->BreakFragment(results, *fragment);
+  neutron_decay_model_->BreakFragment(results, *fragment);
 
   if (old_size == results.size()) {
     results.emplace_back(fragment.release());
@@ -453,17 +453,17 @@ void ExcitationHandler::ApplyPureNeutronDecay(std::unique_ptr<G4Fragment>&& frag
 }
 
 void ExcitationHandler::GroupFragments(G4FragmentVector&& fragments, G4FragmentVector& results,
-                                       FragmentQueue& nextStage) {
+                                       FragmentQueue& next_stage) {
   auto* nist = G4NistManager::Instance();
 
   for (auto* fragment_ptr : fragments) {
     // gamma, p, n or stable nuclei
-    if (neutronDecayCondition_(*fragment_ptr)) {
+    if (neutron_decay_condition_(*fragment_ptr)) {
       ApplyPureNeutronDecay(std::unique_ptr<G4Fragment>(fragment_ptr), results);
     } else if (IsStable(*fragment_ptr, nist)) {
       results.emplace_back(fragment_ptr);
     } else {
-      nextStage.emplace(fragment_ptr);
+      next_stage.emplace(fragment_ptr);
     }
   }
 }
