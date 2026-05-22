@@ -28,7 +28,7 @@ class ExcitationHandler {
     void BreakFragment(G4FragmentVector& results, const G4Fragment& fragment);
 
    private:
-    G4FermiPhaseDecay phaseSpaceDecay_;
+    G4FermiPhaseDecay phase_space_decay_;
   };
 
   using Condition = std::function<bool(const G4Fragment&)>;
@@ -50,46 +50,46 @@ class ExcitationHandler {
   // parameters setters
   ExcitationHandler& SetMultiFragmentation(
       std::unique_ptr<G4VMultiFragmentation>&& model = DefaultMultiFragmentation()) {
-    multiFragmentationModel_ = std::move(model);
+    multi_fragmentation_model_ = std::move(model);
     return *this;
   }
 
   ExcitationHandler& SetFermiBreakUp(std::unique_ptr<G4VFermiBreakUp>&& model = DefaultFermiBreakUp(),
-                                     bool setModels = true) {
-    fermiBreakUpModel_ = std::move(model);
-    if (setModels) {
-      evaporationModel_->SetFermiBreakUp(fermiBreakUpModel_.get());
+                                     bool set_models = true) {
+    fermi_break_up_model_ = std::move(model);
+    if (set_models) {
+      evaporation_model_->SetFermiBreakUp(fermi_break_up_model_.get());
     }
     return *this;
   }
 
   ExcitationHandler& SetEvaporation(std::unique_ptr<G4VEvaporation>&& model = DefaultEvaporation(),
-                                    bool setModels = true) {
-    evaporationModel_ = std::move(model);
-    if (setModels) {
-      evaporationModel_->SetPhotonEvaporation(photonEvaporationModel_.get());
-      evaporationModel_->SetFermiBreakUp(fermiBreakUpModel_.get());
+                                    bool set_models = true) {
+    evaporation_model_ = std::move(model);
+    if (set_models) {
+      evaporation_model_->SetPhotonEvaporation(photon_evaporation_model_.get());
+      evaporation_model_->SetFermiBreakUp(fermi_break_up_model_.get());
     }
     return *this;
   }
 
   ExcitationHandler& SetPhotonEvaporation(std::unique_ptr<G4VEvaporationChannel>&& model = DefaultPhotonEvaporation(),
-                                          bool setModels = true) {
-    photonEvaporationModel_ = std::move(model);
-    if (setModels) {
-      evaporationModel_->SetPhotonEvaporation(photonEvaporationModel_.get());
+                                          bool set_models = true) {
+    photon_evaporation_model_ = std::move(model);
+    if (set_models) {
+      evaporation_model_->SetPhotonEvaporation(photon_evaporation_model_.get());
     }
     return *this;
   }
 
   ExcitationHandler& SetNeutronDecay(std::unique_ptr<NeutronDecay>&& model = DefaultNeutronDecay()) {
-    neutronDecayModel_ = std::move(model);
+    neutron_decay_model_ = std::move(model);
     return *this;
   }
 
   template <class F>
   ExcitationHandler& SetMultiFragmentationCondition(F&& func) {
-    multiFragmentationCondition_ = std::forward<F>(func);
+    multi_fragmentation_condition_ = std::forward<F>(func);
     return *this;
   }
 
@@ -100,7 +100,7 @@ class ExcitationHandler {
 
   template <class F>
   ExcitationHandler& SetFermiBreakUpCondition(F&& func) {
-    fermiCondition_ = std::forward<F>(func);
+    fermi_condition_ = std::forward<F>(func);
     return *this;
   }
 
@@ -109,7 +109,7 @@ class ExcitationHandler {
 
   template <class F>
   ExcitationHandler& SetEvaporationCondition(F&& func) {
-    evaporationCondition_ = std::forward<F>(func);
+    evaporation_condition_ = std::forward<F>(func);
     return *this;
   }
 
@@ -118,7 +118,7 @@ class ExcitationHandler {
 
   template <class F>
   ExcitationHandler& SetPhotonEvaporationCondition(F&& func) {
-    photonEvaporationCondition_ = std::forward<F>(func);
+    photon_evaporation_condition_ = std::forward<F>(func);
     return *this;
   }
 
@@ -129,7 +129,7 @@ class ExcitationHandler {
 
   template <class F>
   ExcitationHandler& SetNeutronDecayCondition(F&& func) {
-    neutronDecayCondition_ = std::forward<F>(func);
+    neutron_decay_condition_ = std::forward<F>(func);
     return *this;
   }
 
@@ -137,48 +137,48 @@ class ExcitationHandler {
   ExcitationHandler& SetNeutronDecayCondition() { return SetNeutronDecayCondition(DefaultNeutronDecayCondition()); }
 
   ExcitationHandler& SetStableThreshold(double threshold) {
-    stableThreshold_ = threshold;
+    stable_threshold_ = threshold;
     return *this;
   }
 
   // parameters getters
-  std::unique_ptr<NeutronDecay>& GetNeutronDecay() { return neutronDecayModel_; }
+  std::unique_ptr<NeutronDecay>& GetNeutronDecay() { return neutron_decay_model_; }
 
-  const std::unique_ptr<NeutronDecay>& GetNeutronDecay() const { return neutronDecayModel_; }
+  const std::unique_ptr<NeutronDecay>& GetNeutronDecay() const { return neutron_decay_model_; }
 
-  std::unique_ptr<G4VMultiFragmentation>& GetMultiFragmentation() { return multiFragmentationModel_; }
+  std::unique_ptr<G4VMultiFragmentation>& GetMultiFragmentation() { return multi_fragmentation_model_; }
 
-  const std::unique_ptr<G4VMultiFragmentation>& GetMultiFragmentation() const { return multiFragmentationModel_; }
+  const std::unique_ptr<G4VMultiFragmentation>& GetMultiFragmentation() const { return multi_fragmentation_model_; }
 
-  std::unique_ptr<G4VFermiBreakUp>& GetFermiBreakUp() { return fermiBreakUpModel_; }
+  std::unique_ptr<G4VFermiBreakUp>& GetFermiBreakUp() { return fermi_break_up_model_; }
 
-  const std::unique_ptr<G4VFermiBreakUp>& GetFermiBreakUp() const { return fermiBreakUpModel_; }
+  const std::unique_ptr<G4VFermiBreakUp>& GetFermiBreakUp() const { return fermi_break_up_model_; }
 
-  std::unique_ptr<G4VEvaporation>& GetEvaporation() { return evaporationModel_; }
+  std::unique_ptr<G4VEvaporation>& GetEvaporation() { return evaporation_model_; }
 
-  const std::unique_ptr<G4VEvaporation>& GetEvaporation() const { return evaporationModel_; }
+  const std::unique_ptr<G4VEvaporation>& GetEvaporation() const { return evaporation_model_; }
 
-  Condition& GetMultiFragmentationCondition() { return multiFragmentationCondition_; }
+  Condition& GetMultiFragmentationCondition() { return multi_fragmentation_condition_; }
 
-  const Condition& GetMultiFragmentationCondition() const { return multiFragmentationCondition_; }
+  const Condition& GetMultiFragmentationCondition() const { return multi_fragmentation_condition_; }
 
-  Condition& GetFermiBreakUpCondition() { return fermiCondition_; }
+  Condition& GetFermiBreakUpCondition() { return fermi_condition_; }
 
-  const Condition& GetFermiBreakUpCondition() const { return fermiCondition_; }
+  const Condition& GetFermiBreakUpCondition() const { return fermi_condition_; }
 
-  Condition& GetEvaporationCondition() { return evaporationCondition_; }
+  Condition& GetEvaporationCondition() { return evaporation_condition_; }
 
-  const Condition& GetEvaporationCondition() const { return evaporationCondition_; }
+  const Condition& GetEvaporationCondition() const { return evaporation_condition_; }
 
-  Condition& GetPhotonEvaporationCondition() { return photonEvaporationCondition_; }
+  Condition& GetPhotonEvaporationCondition() { return photon_evaporation_condition_; }
 
-  const Condition& GetPhotonEvaporationCondition() const { return photonEvaporationCondition_; }
+  const Condition& GetPhotonEvaporationCondition() const { return photon_evaporation_condition_; }
 
-  Condition& GetNeutronDecayCondition() { return neutronDecayCondition_; }
+  Condition& GetNeutronDecayCondition() { return neutron_decay_condition_; }
 
-  const Condition& GetNeutronDecayCondition() const { return neutronDecayCondition_; }
+  const Condition& GetNeutronDecayCondition() const { return neutron_decay_condition_; }
 
-  double GetStableThreshold() const { return stableThreshold_; }
+  double GetStableThreshold() const { return stable_threshold_; }
 
  protected:
   // default models and conditions
@@ -207,33 +207,33 @@ class ExcitationHandler {
   bool IsStable(const G4Fragment& fragment, const G4NistManager* nist) const;
 
   void ApplyMultiFragmentation(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results,
-                               FragmentQueue& nextStage);
+                               FragmentQueue& next_stage);
 
-  void ApplyFermiBreakUp(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results, FragmentQueue& nextStage);
+  void ApplyFermiBreakUp(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results, FragmentQueue& next_stage);
 
-  void ApplyEvaporation(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results, FragmentQueue& nextStage);
+  void ApplyEvaporation(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results, FragmentQueue& next_stage);
 
   void ApplyPhotonEvaporation(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results);
 
   void ApplyPureNeutronDecay(std::unique_ptr<G4Fragment>&& fragment, G4FragmentVector& results);
 
-  void GroupFragments(G4FragmentVector&& fragments, G4FragmentVector& results, FragmentQueue& nextStage);
+  void GroupFragments(G4FragmentVector&& fragments, G4FragmentVector& results, FragmentQueue& next_stage);
 
   std::vector<G4ReactionProduct> ConvertResults(const G4FragmentVector& results);
 
-  std::unique_ptr<G4VMultiFragmentation> multiFragmentationModel_;
-  std::unique_ptr<G4VFermiBreakUp> fermiBreakUpModel_;
-  std::unique_ptr<G4VEvaporation> evaporationModel_;
-  std::unique_ptr<G4VEvaporationChannel> photonEvaporationModel_;
-  std::unique_ptr<NeutronDecay> neutronDecayModel_;
+  std::unique_ptr<G4VMultiFragmentation> multi_fragmentation_model_;
+  std::unique_ptr<G4VFermiBreakUp> fermi_break_up_model_;
+  std::unique_ptr<G4VEvaporation> evaporation_model_;
+  std::unique_ptr<G4VEvaporationChannel> photon_evaporation_model_;
+  std::unique_ptr<NeutronDecay> neutron_decay_model_;
 
-  Condition multiFragmentationCondition_;
-  Condition fermiCondition_;
-  Condition photonEvaporationCondition_;
-  Condition evaporationCondition_;
-  Condition neutronDecayCondition_;
+  Condition multi_fragmentation_condition_;
+  Condition fermi_condition_;
+  Condition photon_evaporation_condition_;
+  Condition evaporation_condition_;
+  Condition neutron_decay_condition_;
 
-  double stableThreshold_ = 0.;
+  double stable_threshold_ = 0.;
 };
 
 #endif  // DEEXCITATION_HANDLER_EXCITATIONHANDLER_H_

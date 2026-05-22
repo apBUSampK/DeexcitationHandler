@@ -15,7 +15,6 @@ jobs:
     env:
       CXX: g++
       G4_VERSION: v11.4.0
-      # Outside the checkout tree: CMake rejects Geant4 includes under CMAKE_SOURCE_DIR.
       G4_INSTALL: /home/runner/.geant4
 
     steps:
@@ -25,8 +24,8 @@ jobs:
       - name: Checkout COLA
         uses: actions/checkout@v6
         with:
-          repository: Spectator-matter-group-INR-RAS/COLA
-          ref: main
+          repository: ZakayZ/COLA
+          ref: tidy
           path: COLA
 
       - name: Checkout Geant4

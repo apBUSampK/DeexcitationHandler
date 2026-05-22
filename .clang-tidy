@@ -2,7 +2,7 @@
 ---
 WarningsAsErrors: '*'
 HeaderFilterRegex: '.*'
-ExcludeHeaderFilterRegex: '^(.*/)?(tinyxml2|Geant4|CLHEP)/.*'
+ExcludeHeaderFilterRegex: '^(.*/)?tinyxml2/.*'
 FormatStyle: 'file'
 UseColor: true
 SystemHeaders: false
@@ -58,6 +58,28 @@ CheckOptions:
     value: lower_case
   - key: readability-identifier-naming.ClassMemberSuffix
     value: _
+  - key: readability-identifier-naming.PrivateMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.PrivateMemberSuffix
+    value: _
+  - key: readability-identifier-naming.ProtectedMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.ProtectedMemberSuffix
+    value: _
+  - key: readability-identifier-naming.PublicMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.StructMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.MethodCase
+    value: CamelCase
+  - key: readability-identifier-naming.ClassMethodCase
+    value: CamelCase
+  - key: readability-identifier-naming.VirtualMethodCase
+    value: CamelCase
+  - key: readability-identifier-naming.ConstexprMethodCase
+    value: CamelCase
   - key: readability-identifier-naming.ClassConstantCase
     value: CamelCase
   - key: readability-identifier-naming.ClassConstantPrefix
@@ -79,15 +101,15 @@ CheckOptions:
   - key: readability-identifier-length.MinimumVariableNameLength
     value: 2
   - key: readability-identifier-length.IgnoredVariableNames
-    value: '^(i|j|k|x|y|z|n|a|b|A|Z|it)$'
+    value: '^(i|j|k|x|y|z|n|a|b)$'
   - key: readability-identifier-length.MinimumParameterNameLength
     value: 2
   - key: readability-identifier-length.IgnoredParameterNames
-    value: '^(i|j|k|x|y|z|n|a|b|A|Z)$'
+    value: '^(i|j|k|x|y|z|n|a|b)$'
   - key: readability-identifier-length.MinimumLoopCounterNameLength
-    value: 3
+    value: 2
   - key: readability-identifier-length.IgnoredLoopCounterNames
-    value: '^(i|j|k|n|it)$'
+    value: '^(i|j|k|n)$'
   - key: readability-identifier-length.MinimumExceptionNameLength
     value: 3
   - key: readability-identifier-length.IgnoredExceptionVariableNames
