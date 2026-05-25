@@ -44,49 +44,52 @@ set_target_properties(
                INSTALL_RPATH_USE_LINK_PATH TRUE 
 )
 
-install(
-    TARGETS ${COLA_MODULE_NAME}
-    EXPORT ${COLA_MODULE_NAME}Export
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/${COLA_MODULE_NAME}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/${COLA_MODULE_NAME}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    INCLUDES
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${COLA_MODULE_NAME}
-)
+# Check for COLA_FETCH_MODE to prevent install instructions from generating
+if(NOT COLA_FETCH_MODE)
+    install(
+        TARGETS ${COLA_MODULE_NAME}
+        EXPORT ${COLA_MODULE_NAME}Export
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/${COLA_MODULE_NAME}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/${COLA_MODULE_NAME}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        INCLUDES
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${COLA_MODULE_NAME}
+    )
 
-install(
-    DIRECTORY ${COLA_MODULE_NAME}
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    FILES_MATCHING
-    PATTERN "*.h"
-)
+    install(
+        DIRECTORY ${COLA_MODULE_NAME}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        FILES_MATCHING
+        PATTERN "*.h"
+    )
 
-configure_package_config_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE_NAME}Config.cmake
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${COLA_MODULE_NAME}
-)
+    configure_package_config_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE_NAME}Config.cmake
+        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${COLA_MODULE_NAME}
+    )
 
-write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE_NAME}ConfigVersion.cmake
-    VERSION ${Deexcitation_VERSION}
-    COMPATIBILITY AnyNewerVersion
-)
+    write_basic_package_version_file(
+        ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE_NAME}ConfigVersion.cmake
+        VERSION ${Deexcitation_VERSION}
+        COMPATIBILITY AnyNewerVersion
+    )
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE_NAME}Config.cmake
-              ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE_NAME}ConfigVersion.cmake
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE_NAME}Config.cmake
+                ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE_NAME}ConfigVersion.cmake
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${COLA_MODULE_NAME}
+    )
+
+    install(
+        EXPORT ${COLA_MODULE_NAME}Export
+        FILE ${COLA_MODULE_NAME}Export.cmake
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${COLA_MODULE_NAME}
-)
+    )
 
-install(
-    EXPORT ${COLA_MODULE_NAME}Export
-    FILE ${COLA_MODULE_NAME}Export.cmake
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${COLA_MODULE_NAME}
-)
+    enable_testing()
+    if (BUILD_TESTING)
+        add_subdirectory(tests)
+    endif ()
 
-enable_testing()
-if (BUILD_TESTING)
-    add_subdirectory(tests)
-endif ()
-
-setup_cola_quality_tools(EXCLUDE_PATTERNS "(^|/)COLA/" "(^|/)geant4/")
+    setup_cola_quality_tools(EXCLUDE_PATTERNS "(^|/)COLA/" "(^|/)geant4/")
+endif()
