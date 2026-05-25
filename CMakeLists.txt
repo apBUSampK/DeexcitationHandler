@@ -32,7 +32,7 @@ target_compile_features(${COLA_MODULE_NAME} PRIVATE cxx_std_20)
 
 target_include_directories(
     ${COLA_MODULE_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-                          $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/Deexcitation>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/Deexcitation>
 )
 
 set_target_properties(
@@ -41,11 +41,11 @@ set_target_properties(
                SOVERSION "${PROJECT_VERSION_MAJOR}"
                CXX_CLANG_TIDY "${COLA_CMAKE_CXX_CLANG_TIDY}"
                BUILD_WITH_INSTALL_RPATH TRUE
-               INSTALL_RPATH_USE_LINK_PATH TRUE 
+               INSTALL_RPATH_USE_LINK_PATH TRUE
 )
 
 # Check for COLA_FETCH_MODE to prevent install instructions from generating
-if(NOT COLA_FETCH_MODE)
+if (NOT COLA_FETCH_MODE)
     install(
         TARGETS ${COLA_MODULE_NAME}
         EXPORT ${COLA_MODULE_NAME}Export
@@ -76,7 +76,7 @@ if(NOT COLA_FETCH_MODE)
     )
 
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE_NAME}Config.cmake
-                ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE_NAME}ConfigVersion.cmake
+                  ${CMAKE_CURRENT_BINARY_DIR}/${COLA_MODULE_NAME}ConfigVersion.cmake
             DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${COLA_MODULE_NAME}
     )
 
@@ -92,4 +92,4 @@ if(NOT COLA_FETCH_MODE)
     endif ()
 
     setup_cola_quality_tools(EXCLUDE_PATTERNS "(^|/)COLA/" "(^|/)geant4/")
-endif()
+endif ()
