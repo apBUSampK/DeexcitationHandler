@@ -45,7 +45,7 @@ set_target_properties(
 )
 
 # Check for COLA_FETCH_MODE to prevent install instructions from generating
-if (NOT $ENV{COLA_FETCH_MODE})
+if (NOT DEFINED $ENV{COLA_FETCH_MODE})
     install(
         TARGETS ${COLA_MODULE_NAME}
         EXPORT ${COLA_MODULE_NAME}Export
